@@ -1,0 +1,67 @@
+name: Prepare Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        required: true
+        description: Version (e.g. v1.0.0-alpha.8)
+
+jobs:
+  prepare-release:
+    runs-on: ubuntu-24.04
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Determine last tag
+        id: last_tag
+        run: |
+          LAST_TAG=$(git tag --sort=-creatordate | head -n 1)
+          echo "tag=$LAST_TAG" >> $GITHUB_OUTPUT
+
+      - name: Generate changelog section
+        run: |
+          VERSION="${{ inputs.version }}"
+          DATE=$(date +%Y-%m-%d)
+          LAST_TAG="${{ steps.last_tag.outputs.tag }}"
+
+          echo "## 🔥 [$VERSION](https://github.com/${{ github.repository }}/compare/${LAST_TAG#v}...${VERSION#v}) [$DATE]" > section.md
+          echo "" >> section.md
+
+          for TYPE in New Changed Fixed Removed; do
+            COMMITS=$(git log "$LAST_TAG"..HEAD --pretty=format:"%s" | grep "^$TYPE:" || true)
+            if [ -n "$COMMITS" ]; then
+              echo "### $TYPE:" >> section.md
+              echo "$COMMITS" | sed "s/^$TYPE:/* /" >> section.md
+              echo "" >> section.md
+            fi
+          done
+
+      - name: Update CHANGELOG.md
+        run: |
+          awk '
+            NR==1 {print; print ""; system("cat section.md"); next}
+            {print}
+          ' CHANGELOG.md > CHANGELOG.tmp
+
+          mv CHANGELOG.tmp CHANGELOG.md
+
+      - name: Bump Application VERSION constant
+        run: |
+          VERSION="${{ inputs.version }}"
+          VERSION="${VERSION#v}"
+
+          sed -i \
+            "s/public const VERSION = '[^']*';/public const VERSION = '${VERSION}';/" \
+            app/Application.php
+
+      - name: Commit release preparation
+        run: |
+          git config user.name "github-actions"
+          git config user.email "github-actions@github.com"
+          git commit -am "chore: prepare release ${{ inputs.version }}"
+          git push
