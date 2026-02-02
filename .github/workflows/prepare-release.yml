@@ -57,11 +57,11 @@ jobs:
 
           sed -i \
             "s/public const VERSION = '[^']*';/public const VERSION = '${VERSION}';/" \
-            app/Application.php
+            src/Application.php
 
       - name: Commit release preparation
         run: |
           git config user.name "github-actions"
           git config user.email "github-actions@github.com"
-          git commit -am "chore: prepare release ${{ inputs.version }}"
+          git commit -am "Changed: Prepare Release ${{ inputs.version }}"
           git push
