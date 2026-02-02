@@ -1,5 +1,8 @@
 # Changelog
 
+## 🔥 [v1.0.0-alpha.8](https://github.com/merloxx/framework/compare/...1.0.0-alpha.8) [2026-02-02]
+
+
 All notable changes to this project will be documented in this file, in reverse chronological order by release.
 
 ## 🔥 [v1.0.0-alpha.7](https://github.com/zaphyr-org/framework/compare/1.0.0-alpha.6...1.0.0-alpha.7) [2025-06-08]
